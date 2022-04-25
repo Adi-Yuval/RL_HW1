@@ -51,7 +51,7 @@ def a_star(puzzle):
             if neighbor.to_string() in concluded:
                 continue
 
-            heuristic = neighbor.get_manhattan_distance(goal)
+            heuristic = neighbor.get_manhattan_distance(goal)  # * 1e10  # for section 3.2.5
             # # for section 3.2.3
             # heuristic = 0
             # for i in range(3):
