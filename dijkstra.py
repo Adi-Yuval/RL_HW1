@@ -2,6 +2,7 @@ from puzzle import *
 from planning_utils import *
 import heapq
 import datetime
+import os
 
 
 def dijkstra(puzzle):
@@ -53,6 +54,8 @@ def dijkstra(puzzle):
 
         concluded.add(current.to_string())
 
+    # print("Expanded states: " + str(len(concluded)))
+
     return prev
 
 
@@ -81,3 +84,11 @@ if __name__ == '__main__':
     solution_start_time = datetime.datetime.now()
     solve(puzzle)
     print('time to solve {}'.format(datetime.datetime.now()-solution_start_time))
+
+    # # for section 3.2.4
+    # initial_state = State('0 8 7' + os.linesep + '6 5 4' + os.linesep + '3 2 1')
+    # goal_state = State('1 2 3' + os.linesep + '4 5 6' + os.linesep + '7 8 0')
+    # puzzle = Puzzle(initial_state, goal_state)
+    # solution_start_time = datetime.datetime.now()
+    # solve(puzzle)
+    # print('time to solve {}'.format(datetime.datetime.now()-solution_start_time))

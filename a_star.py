@@ -1,3 +1,5 @@
+import os
+
 from puzzle import *
 from planning_utils import *
 import heapq
@@ -31,8 +33,42 @@ def a_star(puzzle):
     prev = {initial.to_string(): None}
 
     while len(fringe) > 0:
-        # remove the following line and complete the algorithm
-        assert False
+        # pop the first item from the fringe
+        _, current = heapq.heappop(fringe)
+        if current.to_string() in concluded:
+            continue
+
+        curr_dist = distances[current.to_string()]
+
+        # if the current state is the goal state, we are done
+        if current == goal:
+            break
+
+        # otherwise, add/update its neighbors in the fringe
+        for action in current.get_actions():
+            neighbor = current.apply_action(action)
+
+            if neighbor.to_string() in concluded:
+                continue
+
+            heuristic = neighbor.get_manhattan_distance(goal)
+            # # for section 3.2.3
+            # heuristic = 0
+            # for i in range(3):
+            #     for j in range(3):
+            #         if neighbor._array[i][j] != goal._array[i][j]:
+            #             heuristic += 1
+
+            heapq.heappush(fringe, (heuristic + curr_dist + 1, neighbor))
+
+            if (neighbor.to_string() not in distances) or \
+                    (distances[neighbor.to_string()] < curr_dist + 1):
+                distances[neighbor.to_string()] = curr_dist + 1
+                prev[neighbor.to_string()] = current
+
+        concluded.add(current.to_string())
+
+    # print("Number of nodes expanded: ", len(concluded))
 
     return prev
 
@@ -62,3 +98,12 @@ if __name__ == '__main__':
     solution_start_time = datetime.datetime.now()
     solve(puzzle)
     print('time to solve {}'.format(datetime.datetime.now()-solution_start_time))
+
+    # # for section 3.2.4:
+    # initial_state = State('0 8 7' + os.linesep + '6 5 4' + os.linesep + '3 2 1')
+    # goal_state = State('1 2 3' + os.linesep + '4 5 6' + os.linesep + '7 8 0')
+    # puzzle = Puzzle(initial_state, goal_state)
+    # solution_start_time = datetime.datetime.now()
+    # solve(puzzle)
+    # print('time to solve {}'.format(datetime.datetime.now()-solution_start_time))
+
