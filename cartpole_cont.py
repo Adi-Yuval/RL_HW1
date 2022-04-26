@@ -150,7 +150,7 @@ if __name__ == '__main__':
     env.render()
     is_done = False
     while not is_done:
-        _, r, is_done, _ = env.step(np.array([0.0]))
+        _, r, is_done, _ = env.step(np.array([0.0], dtype=np.float32))
         env.render()
         print(r)
     # run random forces
