@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 from cartpole_cont import CartPoleContEnv
 
@@ -99,41 +101,77 @@ def print_diff(iteration, planned_theta, actual_theta, planned_action, actual_ac
 
 
 if __name__ == '__main__':
-    env = CartPoleContEnv(initial_theta=np.pi * 0.1)
-    # the following is an example to start at a different theta
-    # env = CartPoleContEnv(initial_theta=np.pi * 0.25)
+    actual_theta_all = []
+    for theta in [np.pi/10, np.pi * 0.25, np.pi * 0.125]:
+        env = CartPoleContEnv(initial_theta=theta)
+        # the following is an example to start at a different theta
+        # env = CartPoleContEnv(initial_theta=np.pi * 0.25)
 
-    # print the matrices used in LQR
-    print('A: {}'.format(get_A(env)))
-    print('B: {}'.format(get_B(env)))
+        # print the matrices used in LQR
+        print('A: {}'.format(get_A(env)))
+        print('B: {}'.format(get_B(env)))
 
-    # start a new episode
-    actual_state = env.reset()
-    env.render()
-    # use LQR to plan controls
-    xs, us, Ks = find_lqr_control_input(env)
-    # run the episode until termination, and print the difference between planned and actual
-    is_done = False
-    iteration = 0
-    is_stable_all = []
-    while not is_done:
-        # print the differences between planning and execution time
-        predicted_theta = xs[iteration].item(2)
-        actual_theta = actual_state[2]
-        predicted_action = us[iteration].item(0)
-        actual_action = (Ks[iteration] * np.expand_dims(actual_state, 1)).item(0)
-        print_diff(iteration, predicted_theta, actual_theta, predicted_action, actual_action)
-        # apply action according to actual state visited
-        # make action in range
-        actual_action = max(env.action_space.low.item(0), min(env.action_space.high.item(0), actual_action))
-        actual_action = np.array([actual_action])
-        actual_state, reward, is_done, _ = env.step(np.array(actual_action, dtype=np.float32))
-        is_stable = reward == 1.0
-        is_stable_all.append(is_stable)
+        # start a new episode
+        actual_state = env.reset()
         env.render()
-        iteration += 1
-    env.close()
-    # we assume a valid episode is an episode where the agent managed to stabilize the pole for the last 100 time-steps
-    valid_episode = np.all(is_stable_all[-100:])
-    # print if LQR succeeded
-    print('valid episode: {}'.format(valid_episode))
+        # use LQR to plan controls
+        xs, us, Ks = find_lqr_control_input(env)
+        # run the episode until termination, and print the difference between planned and actual
+        is_done = False
+        iteration = 0
+        is_stable_all = []
+        actual_theta_episode = []
+        while not is_done:
+            # print the differences between planning and execution time
+            predicted_theta = xs[iteration].item(2)
+            actual_theta = actual_state[2]
+            predicted_action = us[iteration].item(0)
+            actual_action = (Ks[iteration] * np.expand_dims(actual_state, 1)).item(0)
+            print_diff(iteration, predicted_theta, actual_theta, predicted_action, actual_action)
+            # apply action according to actual state visited
+            # make action in range
+            actual_action = max(env.action_space.low.item(0), min(env.action_space.high.item(0), actual_action))
+            actual_action = np.array([actual_action])
+            actual_state, reward, is_done, _ = env.step(np.array(actual_action, dtype=np.float32))
+            actual_theta_episode.append(actual_state[2]/np.pi*180)
+            is_stable = reward == 1.0
+            is_stable_all.append(is_stable)
+            env.render()
+            iteration += 1
+        env.close()
+        # we assume a valid episode is an episode where the agent managed to stabilize the pole for the last 100 time-steps
+        valid_episode = np.all(is_stable_all[-100:])
+        # print if LQR succeeded
+        print('valid episode: {}'.format(valid_episode))
+
+        actual_theta_all.append(actual_theta_episode)
+
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots()
+    ax.plot(actual_theta_all[0], label='theta=pi/10')
+    ax.plot(actual_theta_all[1], label='theta=pi*0.25 (unstable)')
+    ax.plot(actual_theta_all[2], label='theta=pi*0.125 (unstable/2)')
+    ax.set(xlabel='time units', ylabel='observed theta (deg)',
+           title='LQR on Cart Pole')
+    ax.grid()
+    ax.legend()
+
+    fig.savefig("different_thetas.png")
+    plt.show()
+
+    fig, ax = plt.subplots()
+    ax.plot(actual_theta_all[0], label='theta=pi/10')
+    ax.plot(actual_theta_all[1], label='theta=pi*0.25 (unstable)')
+    ax.plot(actual_theta_all[2], label='theta=pi*0.125 (unstable/2)')
+    ax.set(xlabel='time units', ylabel='observed theta (deg)',
+           title='LQR on Cart Pole')
+    ax.grid()
+    ax.legend()
+
+    fig.savefig("different_thetas_zoom_in.png")
+
+    plt.ylim(-100, 100)
+    plt.show()
+
+
